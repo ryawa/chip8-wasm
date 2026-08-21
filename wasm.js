@@ -16,4 +16,4 @@ const { instance } = await WebAssembly.instantiateStreaming(
     }
 );
 console.log(instance.exports.add(4, 2));
-instance.exports.printString();
+instance.exports.print_string();

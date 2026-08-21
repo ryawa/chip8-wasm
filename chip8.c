@@ -6,6 +6,6 @@ int add(int a, int b) {
     return a + b;
 }
 
-void printString() {
+void print_string() {
     js_log("Hello, world!");
 }
