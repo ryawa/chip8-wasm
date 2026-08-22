@@ -3,7 +3,6 @@ const { instance } = await WebAssembly.instantiateStreaming(
     {
         js: {
             log: log,
-            logInstruction: logInstruction,
             error: error,
             refreshDisplay: refreshDisplay,
         }
@@ -26,10 +25,6 @@ function ptrToStr(ptr) {
 
 function log(ptr) {
     console.log(ptrToStr(ptr));
-}
-
-function logInstruction(inst) {
-    console.log(`instruction: ${inst.toString(16)}`);
 }
 
 function error(ptr) {

@@ -1,11 +1,36 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "printf.h"
+void _putchar(char c) {
+  (void) c;
+}
+
 #define JS_IMPORT(x) __attribute__((import_module("js"), import_name(x)))
 JS_IMPORT("log") void js_log(const char *str);
-JS_IMPORT("logInstruction") void js_log_instruction(uint16_t inst);
 JS_IMPORT("error") void js_error(const char *str);
 JS_IMPORT("refreshDisplay") void js_refresh_display();
+
+void print(const char *format, ...) {
+  char buffer[256];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, sizeof(buffer), format, args);
+  va_end(args);
+
+  js_log(buffer);
+}
+
+void error(const char *format, ...) {
+  char buffer[256];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, sizeof(buffer), format, args);
+  va_end(args);
+
+  js_error(buffer);
+}
+
 
 #define WIDTH 64
 #define HEIGHT 32
@@ -74,16 +99,15 @@ void draw_sprite(int x, int y, int height) {
 }
 
 void step() {
-  js_log_instruction(pc);
+  print("PC = %x", pc);
   uint16_t inst = mem[pc] << 8 | mem[pc + 1];
   pc += 2;
 
-  js_log_instruction(inst);
+  print("instruction = %x", inst);
   switch (NIBBLE(inst, 0)) {
   case 0x0:
     if (inst != 0x00E0) {
-      js_log_instruction(inst);
-      js_error("Expected instruction 0x00E0");
+      error("Expected instruction 0x00E0");
     } else {
       clear_display();
       js_refresh_display();
