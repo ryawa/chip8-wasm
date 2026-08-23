@@ -63,6 +63,8 @@ let accumulator = 0;
 
 function start() {
     last = document.timeline.currentTime;
+    // Clear screen before starting
+    refreshDisplay();
     animationFrame = requestAnimationFrame(step);
 }
 

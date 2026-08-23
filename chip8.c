@@ -71,12 +71,7 @@ uint8_t sound_timer;
 uint8_t registers[16];
 uint8_t *flag = &registers[15];
 
-void clear_display() {
-  for (int i = 0; i < HEIGHT; i++) {
-    display[i] = 0;
-  }
-}
-
+// Should be called every time a new ROM is loaded
 void reset() {
   // Because I'm too lazy to implement memset myself
   __builtin_memset(mem, 0, sizeof(mem));
@@ -91,6 +86,12 @@ void reset() {
   delay_timer = 0;
   sound_timer = 0;
   __builtin_memset(registers, 0, sizeof(registers));
+}
+
+void clear_display() {
+  for (int i = 0; i < HEIGHT; i++) {
+    display[i] = 0;
+  }
 }
 
 void draw_sprite(int x, int y, int height) {
