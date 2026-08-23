@@ -1,3 +1,5 @@
+"use strict";
+
 const { instance } = await WebAssembly.instantiateStreaming(
     fetch("./chip8.wasm"),
     {
@@ -11,8 +13,18 @@ const { instance } = await WebAssembly.instantiateStreaming(
 
 const buffer = instance.exports.memory.buffer;
 const wasmMemory = new Uint8Array(buffer);
+const wasmMemoryView = new DataView(buffer);
 const emulatorMemory = new Uint8Array(buffer, instance.exports.mem, 4096);
-const display = new Uint8Array(buffer, instance.exports.display, instance.exports.display_width * instance.exports.display_height);
+const displayW = wasmMemoryView.getInt32(instance.exports.display_width.value, true);
+const displayH = wasmMemoryView.getInt32(instance.exports.display_height.value, true);
+const display = new BigUint64Array(buffer, instance.exports.display, displayH);
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const canvasW = canvas.width;
+const canvasH = canvas.height;
+const dx = canvasW / displayW;
+const dy = canvasH / displayH;
 
 function ptrToStr(ptr) {
     let end = ptr;
@@ -28,47 +40,55 @@ function log(ptr) {
 }
 
 function error(ptr) {
-    running = false;
     console.error(ptrToStr(ptr));
 }
 
 function refreshDisplay() {
-    console.log("refresh");
+    ctx.fillRect(0, 0, canvasW, canvasH);
+    for (let i = 0; i < displayH; i++) {
+        const row = display[i];
+        for (let j = 0; j < displayW; j++) {
+            const mask = 1n << BigInt(displayW - 1 - j);
+            if (row & mask) {
+                ctx.clearRect(j * dx, i * dy, dx, dy);
+            }
+        }
+    }
 }
 
 const INST_PER_SEC = 700;
-let running = false;
+let animationFrame = null;
 let last;
 let accumulator = 0;
 
 function start() {
-    running = true;
     last = document.timeline.currentTime;
-    requestAnimationFrame(step);
+    animationFrame = requestAnimationFrame(step);
 }
 
 function stop() {
-    running = false;
+    cancelAnimationFrame(animationFrame);
+    last = undefined;
     accumulator = 0;
+    instance.exports.reset();
 }
 
 function step(now) {
-    if (!running) {
-        return;
-    }
-
     accumulator += (now - last) / 1000;
     while (accumulator >= 1 / INST_PER_SEC) {
-        instance.exports.step();
+        if (instance.exports.step() !== 0) {
+            return;
+        }
         accumulator -= 1 / INST_PER_SEC;
     }
 
     last = now;
-    requestAnimationFrame(step);
+    animationFrame = requestAnimationFrame(step);
 }
 
 const fileInput = document.getElementById("file-input");
 fileInput.addEventListener("change", async () => {
+    stop();
     const bytes = await fileInput.files[0].bytes();
     emulatorMemory.set(bytes, 0x200);
     start();

@@ -1,10 +1,9 @@
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "printf.h"
-void _putchar(char c) {
-  (void) c;
-}
+void _putchar(char c) { (void)c; }
 
 #define JS_IMPORT(x) __attribute__((import_module("js"), import_name(x)))
 JS_IMPORT("log") void js_log(const char *str);
@@ -21,7 +20,7 @@ void print(const char *format, ...) {
   js_log(buffer);
 }
 
-void error(const char *format, ...) {
+void print_error(const char *format, ...) {
   char buffer[256];
   va_list args;
   va_start(args, format);
@@ -31,38 +30,39 @@ void error(const char *format, ...) {
   js_error(buffer);
 }
 
-
-#define WIDTH 64
-#define HEIGHT 32
-static const int display_width = WIDTH;   // NOLINT
-static const int display_height = HEIGHT; // NOLINT
-
 #define NIBBLE(op, n) (((op) >> (12 - 4 * (n))) & 0x0F)
 #define BYTE(op, n) (((op) >> (8 - 8 * (n))) & 0xFF)
 #define ADDR(op) ((op) & 0x0FFF)
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-uint8_t mem[4096] = {
-    [0x50] = 0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
-    0x20,          0x60, 0x20, 0x20, 0x70, // 1
-    0xF0,          0x10, 0xF0, 0x80, 0xF0, // 2
-    0xF0,          0x10, 0xF0, 0x10, 0xF0, // 3
-    0x90,          0x90, 0xF0, 0x10, 0x10, // 4
-    0xF0,          0x80, 0xF0, 0x10, 0xF0, // 5
-    0xF0,          0x80, 0xF0, 0x90, 0xF0, // 6
-    0xF0,          0x10, 0x20, 0x40, 0x40, // 7
-    0xF0,          0x90, 0xF0, 0x90, 0xF0, // 8
-    0xF0,          0x90, 0xF0, 0x10, 0xF0, // 9
-    0xF0,          0x90, 0xF0, 0x90, 0x90, // A
-    0xE0,          0x90, 0xE0, 0x90, 0xE0, // B
-    0xF0,          0x80, 0x80, 0x80, 0xF0, // C
-    0xE0,          0x90, 0x90, 0x90, 0xE0, // D
-    0xF0,          0x80, 0xF0, 0x80, 0xF0, // E
-    0xF0,          0x80, 0xF0, 0x80, 0x80  // F
+#define WIDTH 64
+#define HEIGHT 32
+const int32_t display_width = WIDTH;   // NOLINT
+const int32_t display_height = HEIGHT; // NOLINT
+
+uint8_t FONT[] = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
+
+uint8_t mem[4096];
 uint64_t display[HEIGHT];
-uint16_t pc = 0x200;
+uint16_t pc;
 uint16_t idx;
 uint16_t stack_base[16];
 uint16_t *stack_ptr = stack_base;
@@ -77,6 +77,22 @@ void clear_display() {
   }
 }
 
+void reset() {
+  // Because I'm too lazy to implement memset myself
+  __builtin_memset(mem, 0, sizeof(mem));
+  for (size_t i = 0; i < sizeof(FONT); i++) {
+    mem[0x50 + i] = FONT[i];
+  }
+  __builtin_memset(display, 0, sizeof(display));
+  pc = 0x200;
+  idx = 0;
+  __builtin_memset(stack_base, 0, sizeof(stack_base));
+  stack_ptr = stack_base;
+  delay_timer = 0;
+  sound_timer = 0;
+  __builtin_memset(registers, 0, sizeof(registers));
+}
+
 void draw_sprite(int x, int y, int height) {
   *flag = 0;
   for (int i = 0; i < height; i++) {
@@ -84,7 +100,7 @@ void draw_sprite(int x, int y, int height) {
       break;
     }
 
-    uint64_t mask = mem[idx];
+    uint64_t mask = (uint64_t)mem[idx + i];
     if (x <= WIDTH - 8) {
       mask <<= ((WIDTH - 8) - x);
     } else {
@@ -98,20 +114,20 @@ void draw_sprite(int x, int y, int height) {
   }
 }
 
-void step() {
-  print("PC = %x", pc);
+int step() {
+  /* print("PC = %x", pc); */
   uint16_t inst = mem[pc] << 8 | mem[pc + 1];
+  /* print("instruction = %x", inst); */
   pc += 2;
 
-  print("instruction = %x", inst);
   switch (NIBBLE(inst, 0)) {
   case 0x0:
     if (inst != 0x00E0) {
-      error("Expected instruction 0x00E0");
-    } else {
-      clear_display();
-      js_refresh_display();
+      print_error("Expected instruction 0x00E0");
+      return 1;
     }
+    clear_display();
+    js_refresh_display();
     break;
   case 0x1:
     pc = ADDR(inst);
@@ -129,6 +145,11 @@ void step() {
     uint8_t x = registers[NIBBLE(inst, 1)] % 64;
     uint8_t y = registers[NIBBLE(inst, 2)] % 32;
     draw_sprite(x, y, NIBBLE(inst, 3));
+    js_refresh_display();
     break;
+  default:
+    print_error("Unknown instruction 0x%x", inst);
+    return 1;
   }
+  return 0;
 }
