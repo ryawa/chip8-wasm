@@ -25,6 +25,7 @@ const canvasW = canvas.width;
 const canvasH = canvas.height;
 const dx = canvasW / displayW;
 const dy = canvasH / displayH;
+ctx.fillRect(0, 0, canvasW, canvasH);
 
 function ptrToStr(ptr) {
     let end = ptr;
@@ -63,16 +64,11 @@ let accumulator = 0;
 
 function start() {
     last = document.timeline.currentTime;
-    // Clear screen before starting
-    refreshDisplay();
     animationFrame = requestAnimationFrame(step);
 }
 
 function stop() {
     cancelAnimationFrame(animationFrame);
-    last = undefined;
-    accumulator = 0;
-    instance.exports.reset();
 }
 
 function step(now) {
@@ -88,10 +84,31 @@ function step(now) {
     animationFrame = requestAnimationFrame(step);
 }
 
-const fileInput = document.getElementById("file-input");
-fileInput.addEventListener("change", async () => {
+async function reset() {
     stop();
+    instance.exports.reset();
+    refreshDisplay();
+    last = undefined;
+    accumulator = 0;
     const bytes = await fileInput.files[0].bytes();
     emulatorMemory.set(bytes, 0x200);
+}
+
+const fileInput = document.getElementById("file-input");
+fileInput.addEventListener("change", async () => {
+    reset();
+});
+
+document.getElementById("start").addEventListener("click", () => {
     start();
-})
+});
+document.getElementById("stop").addEventListener("click", () => {
+    stop();
+});
+document.getElementById("step").addEventListener("click", () => {
+    stop();
+    instance.exports.step();
+});
+document.getElementById("reset").addEventListener("click", () => {
+    reset();
+});
