@@ -30,9 +30,9 @@ void print_error(const char *format, ...) {
   js_error(buffer);
 }
 
-#define NIBBLE(op, n) (((op) >> (12 - 4 * (n))) & 0x0F)
-#define BYTE(op, n) (((op) >> (8 - 8 * (n))) & 0xFF)
-#define ADDR(op) ((op) & 0x0FFF)
+#define NIBBLE(inst, n) (((inst) >> (12 - 4 * (n))) & 0x0F)
+#define BYTE(inst, n) (((inst) >> (8 - 8 * (n))) & 0xFF)
+#define ADDR(inst) ((inst) & 0x0FFF)
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -123,31 +123,98 @@ int step() {
 
   switch (NIBBLE(inst, 0)) {
   case 0x0:
-    if (inst != 0x00E0) {
-      print_error("Expected instruction 0x00E0");
-      return 1;
+    switch (inst) {
+      // Clear screen
+      case 0x00E0:
+        clear_display();
+        js_refresh_display();
+        break;
+      // Return
+      case 0x00EE:
+        pc = *stack_ptr;
+        stack_ptr--;
+        break;
+      default:
+        print_error("Expected instruction 0x00E0 or 0x00EE");
     }
-    clear_display();
-    js_refresh_display();
     break;
+
+  // Jump
   case 0x1:
     pc = ADDR(inst);
     break;
+
+  // Call
+  case 0x2:
+    stack_ptr++;
+    *stack_ptr = pc;
+    pc = ADDR(inst);
+    break;
+
+  // Jump if equal to value
+  case 0x3:
+    if (registers[NIBBLE(inst, 1)] == BYTE(inst, 1)) {
+      pc += 2;
+    }
+    break;
+
+  // Jump if not equal to value
+  case 0x4:
+    if (registers[NIBBLE(inst, 1)] != BYTE(inst, 1)) {
+      pc += 2;
+    }
+    break;
+
+  // Jump if registers equal
+  case 0x5:
+    if (NIBBLE(inst, 3) != 0) {
+      print_error("Expected last nibble of opcode 0x5 to be 0x0");
+      return 1;
+    }
+    if (registers[NIBBLE(inst, 1)] == registers[NIBBLE(inst, 2)]) {
+        pc += 2;
+    }
+    break;
+
+  // Move value to register
   case 0x6:
     registers[NIBBLE(inst, 1)] = BYTE(inst, 1);
     break;
+
+  // Add value to register
   case 0x7:
     registers[NIBBLE(inst, 1)] += BYTE(inst, 1);
     break;
+
+  // Arithmetic
+  /* case 0x8: */
+  /*   arithmetic(inst); */
+  /*   break; */
+
+  // Jump if registers not equal
+  case 0x9:
+    if (NIBBLE(inst, 3) != 0) {
+      print_error("Expected last nibble of opcode 0x9 to be 0x0");
+      return 1;
+    }
+    if (registers[NIBBLE(inst, 1)] != registers[NIBBLE(inst, 2)]) {
+        pc += 2;
+    }
+    break;
+
+  // Set index
   case 0xA:
     idx = ADDR(inst);
     break;
+
+  // Draw
   case 0xD:
     uint8_t x = registers[NIBBLE(inst, 1)] % 64;
     uint8_t y = registers[NIBBLE(inst, 2)] % 32;
     draw_sprite(x, y, NIBBLE(inst, 3));
     js_refresh_display();
     break;
+
   default:
     print_error("Unknown instruction 0x%x", inst);
     return 1;
