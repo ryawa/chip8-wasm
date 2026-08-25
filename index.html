@@ -4,9 +4,7 @@
     <body style="font-family: monospace;">
         <div style="display: flex; gap: 20px; margin-bottom: 5px;">
             <canvas id="canvas" width="640" height="320"></canvas>
-            <div id="instructions">
-                <span style="background: yellow;">1234: JMP 234</span><br/>
-            </div>
+            <div id="instructions" style="height: 320px; overflow: auto; padding-right: 5px;"></div>
         </div>
         <div style="display: flex; justify-content: space-between; width: 640px;">
             <input type="file" id="file-input" accept=".ch8"/>
@@ -18,13 +16,7 @@
             </div>
         </div>
         <br/>
-        <div id="memory">
-            00003020: 10f0 80f0 f010 f010 f090 90f0 1010 f080  ................<br/>
-            00003030: f010 f0f0 80f0 90f0 f010 2040 40f0 90f0  .......... @@...<br/>
-            00003040: 90f0 f090 f010 f0f0 90f0 9090 e090 e090  ................<br/>
-            00003050: e0f0 8080 80f0 e090 9090 e0f0 80f0 80f0  ................<br/>
-            00003060: f080 f080 8000 0101 002f 0101 0000 db02  ........./......<br/>
-        </div>
+        <div id="memory" style="height: 400px; overflow: auto; padding-right: 5px; width: max-content;"></div>
         <br/>
         <div style="display: flex; gap: 20px;">
             <div id="registers">

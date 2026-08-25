@@ -71,6 +71,26 @@ uint8_t sound_timer;
 uint8_t registers[16];
 uint8_t *flag = &registers[15];
 
+uint16_t get_pc() {
+  return pc;
+}
+
+uint16_t get_idx() {
+  return idx;
+}
+
+uint8_t get_stack_offset() {
+  return stack_ptr - stack_base;
+}
+
+uint8_t get_delay_timer() {
+  return delay_timer;
+}
+
+uint8_t get_sound_timer() {
+  return sound_timer;
+}
+
 // Should be called every time a new ROM is loaded
 void reset() {
   // Because I'm too lazy to implement memset myself
