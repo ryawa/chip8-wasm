@@ -141,51 +141,55 @@ void draw_sprite(int x, int y, int height) {
   }
 }
 
-void arithmetic(uint16_t inst) {
-  switch (NIBBLE(inst, 3)) {
+void arithmetic(uint8_t N, uint8_t *X, uint8_t Y) {
+  switch (N) {
     case 0x0:
-      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)];
+      *X = Y;
       break;
     case 0x1:
-      registers[NIBBLE(inst, 1)] |= registers[NIBBLE(inst, 2)];
+      *X |= Y;
       break;
     case 0x2:
-      registers[NIBBLE(inst, 1)] &= registers[NIBBLE(inst, 2)];
+      *X &= Y;
       break;
     case 0x3:
-      registers[NIBBLE(inst, 1)] ^= registers[NIBBLE(inst, 2)];
+      *X ^= Y;
       break;
     case 0x4:
-      registers[NIBBLE(inst, 1)] += registers[NIBBLE(inst, 2)];
+      *X += Y;
       break;
     case 0x5:
-      registers[NIBBLE(inst, 1)] -= registers[NIBBLE(inst, 2)];
+      *X -= Y;
       break;
     case 0x7:
-      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)] - registers[NIBBLE(inst, 1)];
+      *X = Y - *X;
       break;
     case 0x6:
 #ifdef SHIFT_SET
-      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)];
+      *X = Y;
 #endif
-      *flag = registers[NIBBLE(inst, 1)] & 1;
-      registers[NIBBLE(inst, 1)] >>= 1;
+      *flag = *X & 1;
+      *X >>= 1;
       break;
     case 0xE:
 #ifdef SHIFT_SET
-      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)];
+      *X = Y;
 #endif
-      *flag = registers[NIBBLE(inst, 1)] & (1 << 7);
-      registers[NIBBLE(inst, 1)] <<= 1;
+      *flag = *X & (1 << 7);
+      *X <<= 1;
       break;
   }
 }
 
 int step() {
-  /* print("PC = %x", pc); */
   uint16_t inst = mem[pc] << 8 | mem[pc + 1];
-  /* print("instruction = %x", inst); */
   pc += 2;
+
+  uint8_t *X = &registers[NIBBLE(inst, 1)];
+  uint8_t Y = registers[NIBBLE(inst, 2)];
+  uint8_t N  = NIBBLE(inst, 3);
+  uint8_t NN = BYTE(inst, 1);
+  uint16_t NNN = ADDR(inst);
 
   switch (NIBBLE(inst, 0)) {
   case 0x0:
@@ -204,109 +208,95 @@ int step() {
         print_error("Expected instruction 0x00E0 or 0x00EE");
     }
     break;
-
   // Jump
   case 0x1:
-    pc = ADDR(inst);
+    pc = NNN;
     break;
-
   // Call
   case 0x2:
     stack_ptr++;
     *stack_ptr = pc;
-    pc = ADDR(inst);
+    pc = NNN;
     break;
-
   // Jump if equal to value
   case 0x3:
-    if (registers[NIBBLE(inst, 1)] == BYTE(inst, 1)) {
+    if (*X == NN) {
       pc += 2;
     }
     break;
-
   // Jump if not equal to value
   case 0x4:
-    if (registers[NIBBLE(inst, 1)] != BYTE(inst, 1)) {
+    if (*X != NN) {
       pc += 2;
     }
     break;
-
   // Jump if registers equal
   case 0x5:
-    if (NIBBLE(inst, 3) != 0) {
+    if (N != 0) {
       print_error("Expected last nibble of opcode 0x5 to be 0x0");
       return 1;
     }
-    if (registers[NIBBLE(inst, 1)] == registers[NIBBLE(inst, 2)]) {
+    if (*X == Y) {
         pc += 2;
     }
     break;
-
   // Move value to register
   case 0x6:
-    registers[NIBBLE(inst, 1)] = BYTE(inst, 1);
+    *X = NN;
     break;
-
   // Add value to register
   case 0x7:
-    registers[NIBBLE(inst, 1)] += BYTE(inst, 1);
+    *X += NN;
     break;
-
   // Arithmetic
   case 0x8:
-    arithmetic(inst);
+    arithmetic(N, X, Y);
     break;
-
   // Jump if registers not equal
   case 0x9:
-    if (NIBBLE(inst, 3) != 0) {
+    if (N != 0) {
       print_error("Expected last nibble of opcode 0x9 to be 0x0");
       return 1;
     }
-    if (registers[NIBBLE(inst, 1)] != registers[NIBBLE(inst, 2)]) {
+    if (*X != Y) {
         pc += 2;
     }
     break;
-
   // Set index
   case 0xA:
-    idx = ADDR(inst);
+    idx = NNN;
     break;
-
   // Jump with offset
   case 0xB:
 #ifdef JUMP_OFFSET_REG
-    uint8_t offset = registers[NIBBLE(inst, 1)];
+    uint8_t offset = *X;
 #else
     uint8_t offset = registers[0];
 #endif
-    idx = ADDR(inst) + offset;
+    idx = NNN + offset;
     break;
-
   // Random
   case 0xC:
-    registers[NIBBLE(inst, 1)] = js_rand() & BYTE(inst, 1);
+    *X = js_rand() & NN;
     break;
-
   // Draw
   case 0xD:
-    uint8_t x = registers[NIBBLE(inst, 1)] % WIDTH;
-    uint8_t y = registers[NIBBLE(inst, 2)] % HEIGHT;
-    draw_sprite(x, y, NIBBLE(inst, 3));
+    uint8_t x = *X % WIDTH;
+    uint8_t y = Y % HEIGHT;
+    draw_sprite(x, y, N);
     js_refresh_display();
     break;
-
   case 0xE:
     switch (BYTE(inst, 1)) {
       // Skip if key
       case 0x9E:
-        if (js_is_pressed(registers[NIBBLE(inst, 1)])) {
+        if (js_is_pressed(*X)) {
           pc += 2;
         }
         break;
       // Skip if not key
       case 0xA1:
-        if (!js_is_pressed(registers[NIBBLE(inst, 1)])) {
+        if (!js_is_pressed(*X)) {
           pc += 2;
         }
         break;
@@ -314,7 +304,6 @@ int step() {
         print_error("Expected instruction 0xE_9E or 0xE_A1");
     }
     break;
-
   default:
     print_error("Unknown instruction 0x%x", inst);
     return 1;
