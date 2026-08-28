@@ -1,10 +1,49 @@
 <!DOCTYPE html>
 <html>
-    <head><title>chip8-wasm</title></head>
+    <head>
+        <title>chip8-wasm</title>
+        <style>
+            kbd > kbd {
+                border-radius: 3px;
+                padding: 10px;
+                border: 1px solid black;
+                display: inline-block;
+            }
+        </style>
+    </head>
     <body style="font-family: monospace;">
         <div style="display: flex; gap: 20px; margin-bottom: 5px;">
             <canvas id="canvas" width="640" height="320"></canvas>
-            <div id="instructions" style="height: 320px; overflow: auto; padding-right: 5px;"></div>
+            <div style="display: grid; place-items: center;">
+                <table style="table-layout: auto; width: max-content;">
+                    <tbody>
+                        <tr>
+                            <td><kbd><kbd id="Digit1">1</kbd></kbd></td>
+                            <td><kbd><kbd id="Digit2">2</kbd></kbd></td>
+                            <td><kbd><kbd id="Digit3">3</kbd></kbd></td>
+                            <td><kbd><kbd id="Digit4">C</kbd></kbd></td>
+                        </tr>
+                        <tr>
+                            <td><kbd><kbd id="KeyQ">4</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyW">5</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyE">6</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyR">D</kbd></kbd></td>
+                        </tr>
+                        <tr>
+                            <td><kbd><kbd id="KeyA">7</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyS">8</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyD">9</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyF">E</kbd></kbd></td>
+                        </tr>
+                        <tr>
+                            <td><kbd><kbd id="KeyZ">A</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyX">0</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyC">B</kbd></kbd></td>
+                            <td><kbd><kbd id="KeyV">F</kbd></kbd></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div style="display: flex; justify-content: space-between; width: 640px;">
             <input type="file" id="file-input" accept=".ch8"/>
@@ -16,9 +55,10 @@
             </div>
         </div>
         <br/>
-        <div id="memory" style="height: 400px; overflow: auto; padding-right: 5px; width: max-content;"></div>
         <br/>
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; gap: 20px; height: 400px;">
+            <div id="instructions" style="overflow: auto; padding-right: 5px;"></div>
+            <div id="memory" style="overflow: auto; padding-right: 5px; width: max-content;"></div>
             <div id="registers">
                 PC:</br>
                 I:</br>

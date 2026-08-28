@@ -9,7 +9,7 @@ void _putchar(char c) { (void)c; }
 JS_IMPORT("log") void js_log(const char *str);
 JS_IMPORT("error") void js_error(const char *str);
 JS_IMPORT("refreshDisplay") void js_refresh_display();
-JS_IMPORT("updateMemoryViews") void js_update_memory_views();
+JS_IMPORT("updateMemoryDisplays") void js_update_memory_displays();
 JS_IMPORT("rand") int js_rand();
 
 void print(const char *format, ...) {

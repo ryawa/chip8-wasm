@@ -30,7 +30,7 @@ function isPrintable(x) {
     return 32 <= x && x <= 126;
 }
 
-function updateMemoryViews() {
+function updateMemoryDisplays() {
     let instructionsHTML = "";
     let memoryHTML = "";
     for (let i = 0; i < 4096; i += 16) {
@@ -74,7 +74,6 @@ const canvasW = canvas.width;
 const canvasH = canvas.height;
 const dx = canvasW / displayW;
 const dy = canvasH / displayH;
-ctx.fillRect(0, 0, canvasW, canvasH);
 
 function ptrToStr(ptr) {
     let end = ptr;
@@ -105,6 +104,37 @@ function refreshDisplay() {
         }
     }
 }
+
+let keys = {
+    "KeyX": false,
+    "Digit1": false,
+    "Digit2": false,
+    "Digit3": false,
+    "KeyQ": false,
+    "KeyW": false,
+    "KeyE": false,
+    "KeyA": false,
+    "KeyS": false,
+    "KeyD": false,
+    "KeyZ": false,
+    "KeyC": false,
+    "Digit4": false,
+    "KeyR": false,
+    "KeyF": false,
+    "KeyV": false
+};
+document.addEventListener("keydown", (e) => {
+    if (e.code in keys) {
+        keys[e.code] = true;
+        document.getElementById(e.code).style = "background: #aaaaaa;"
+    }
+});
+document.addEventListener("keyup", (e) => {
+    if (e.code in keys) {
+        keys[e.code] = false;
+        document.getElementById(e.code).style = "";
+    }
+});
 
 const INST_PER_SEC = 700;
 let animationFrame = null;
@@ -142,7 +172,7 @@ async function reset() {
     accumulator = 0;
     const bytes = await fileInput.files[0].bytes();
     emulatorMemory.set(bytes, 0x200);
-    updateMemoryViews();
+    updateMemoryDisplays();
     refreshDebug();
 }
 
@@ -165,3 +195,6 @@ document.getElementById("step").addEventListener("click", () => {
 document.getElementById("reset").addEventListener("click", () => {
     reset();
 });
+
+refreshDisplay();
+updateMemoryDisplays();
