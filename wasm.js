@@ -7,6 +7,7 @@ const { instance } = await WebAssembly.instantiateStreaming(
             log: log,
             error: error,
             refreshDisplay: refreshDisplay,
+            rand: () => Math.floor(Math.random() * Math.pow(2, 31) - 1),
         }
     }
 );

@@ -10,6 +10,7 @@ JS_IMPORT("log") void js_log(const char *str);
 JS_IMPORT("error") void js_error(const char *str);
 JS_IMPORT("refreshDisplay") void js_refresh_display();
 JS_IMPORT("updateMemoryViews") void js_update_memory_views();
+JS_IMPORT("rand") int js_rand();
 
 void print(const char *format, ...) {
   char buffer[256];
@@ -269,6 +270,21 @@ int step() {
   // Set index
   case 0xA:
     idx = ADDR(inst);
+    break;
+
+  // Jump with offset
+  case 0xB:
+#ifdef JUMP_OFFSET_REG
+    uint8_t offset = registers[NIBBLE(inst, 1)];
+#else
+    uint8_t offset = registers[0];
+#endif
+    idx = ADDR(inst) + offset;
+    break;
+
+  // Random
+  case 0xC:
+    registers[NIBBLE(inst, 1)] = js_rand() & BYTE(inst, 1);
     break;
 
   // Draw
