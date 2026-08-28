@@ -9,6 +9,7 @@ void _putchar(char c) { (void)c; }
 JS_IMPORT("log") void js_log(const char *str);
 JS_IMPORT("error") void js_error(const char *str);
 JS_IMPORT("refreshDisplay") void js_refresh_display();
+JS_IMPORT("updateMemoryViews") void js_update_memory_views();
 
 void print(const char *format, ...) {
   char buffer[256];
@@ -38,9 +39,12 @@ void print_error(const char *format, ...) {
 
 #define WIDTH 64
 #define HEIGHT 32
+// Exported to JS
 const int32_t display_width = WIDTH;   // NOLINT
 const int32_t display_height = HEIGHT; // NOLINT
 
+#define LOAD_ADDR 0x200
+#define FONT_ADDR 0x50
 uint8_t FONT[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -69,7 +73,7 @@ uint16_t *stack_ptr = stack_base;
 uint8_t delay_timer;
 uint8_t sound_timer;
 uint8_t registers[16];
-uint8_t *flag = &registers[15];
+uint8_t *flag = &registers[0xF];
 
 uint16_t get_pc() {
   return pc;
@@ -96,10 +100,10 @@ void reset() {
   // Because I'm too lazy to implement memset myself
   __builtin_memset(mem, 0, sizeof(mem));
   for (size_t i = 0; i < sizeof(FONT); i++) {
-    mem[0x50 + i] = FONT[i];
+    mem[FONT_ADDR + i] = FONT[i];
   }
   __builtin_memset(display, 0, sizeof(display));
-  pc = 0x200;
+  pc = LOAD_ADDR;
   idx = 0;
   __builtin_memset(stack_base, 0, sizeof(stack_base));
   stack_ptr = stack_base;
@@ -132,6 +136,46 @@ void draw_sprite(int x, int y, int height) {
       *flag = 1;
     }
     display[y + i] ^= mask;
+  }
+}
+
+void arithmetic(uint16_t inst) {
+  switch (NIBBLE(inst, 3)) {
+    case 0x0:
+      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)];
+      break;
+    case 0x1:
+      registers[NIBBLE(inst, 1)] |= registers[NIBBLE(inst, 2)];
+      break;
+    case 0x2:
+      registers[NIBBLE(inst, 1)] &= registers[NIBBLE(inst, 2)];
+      break;
+    case 0x3:
+      registers[NIBBLE(inst, 1)] ^= registers[NIBBLE(inst, 2)];
+      break;
+    case 0x4:
+      registers[NIBBLE(inst, 1)] += registers[NIBBLE(inst, 2)];
+      break;
+    case 0x5:
+      registers[NIBBLE(inst, 1)] -= registers[NIBBLE(inst, 2)];
+      break;
+    case 0x7:
+      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)] - registers[NIBBLE(inst, 1)];
+      break;
+    case 0x6:
+#ifdef SHIFT_SET
+      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)];
+#endif
+      *flag = registers[NIBBLE(inst, 1)] & 1;
+      registers[NIBBLE(inst, 1)] >>= 1;
+      break;
+    case 0xE:
+#ifdef SHIFT_SET
+      registers[NIBBLE(inst, 1)] = registers[NIBBLE(inst, 2)];
+#endif
+      *flag = registers[NIBBLE(inst, 1)] & (1 << 7);
+      registers[NIBBLE(inst, 1)] <<= 1;
+      break;
   }
 }
 
@@ -207,9 +251,9 @@ int step() {
     break;
 
   // Arithmetic
-  /* case 0x8: */
-  /*   arithmetic(inst); */
-  /*   break; */
+  case 0x8:
+    arithmetic(inst);
+    break;
 
   // Jump if registers not equal
   case 0x9:
@@ -229,8 +273,8 @@ int step() {
 
   // Draw
   case 0xD:
-    uint8_t x = registers[NIBBLE(inst, 1)] % 64;
-    uint8_t y = registers[NIBBLE(inst, 2)] % 32;
+    uint8_t x = registers[NIBBLE(inst, 1)] % WIDTH;
+    uint8_t y = registers[NIBBLE(inst, 2)] % HEIGHT;
     draw_sprite(x, y, NIBBLE(inst, 3));
     js_refresh_display();
     break;
