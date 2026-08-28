@@ -11,6 +11,7 @@ JS_IMPORT("error") void js_error(const char *str);
 JS_IMPORT("refreshDisplay") void js_refresh_display();
 JS_IMPORT("updateMemoryDisplays") void js_update_memory_displays();
 JS_IMPORT("rand") int js_rand();
+JS_IMPORT("isPressed") bool js_is_pressed(uint8_t key);
 
 void print(const char *format, ...) {
   char buffer[256];
@@ -293,6 +294,25 @@ int step() {
     uint8_t y = registers[NIBBLE(inst, 2)] % HEIGHT;
     draw_sprite(x, y, NIBBLE(inst, 3));
     js_refresh_display();
+    break;
+
+  case 0xE:
+    switch (BYTE(inst, 1)) {
+      // Skip if key
+      case 0x9E:
+        if (js_is_pressed(registers[NIBBLE(inst, 1)])) {
+          pc += 2;
+        }
+        break;
+      // Skip if not key
+      case 0xA1:
+        if (!js_is_pressed(registers[NIBBLE(inst, 1)])) {
+          pc += 2;
+        }
+        break;
+      default:
+        print_error("Expected instruction 0xE_9E or 0xE_A1");
+    }
     break;
 
   default:

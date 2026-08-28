@@ -8,6 +8,7 @@ const { instance } = await WebAssembly.instantiateStreaming(
             error: error,
             refreshDisplay: refreshDisplay,
             rand: () => Math.floor(Math.random() * Math.pow(2, 31) - 1),
+            isPressed: isPressed,
         }
     }
 );
@@ -105,36 +106,41 @@ function refreshDisplay() {
     }
 }
 
-let keys = {
-    "KeyX": false,
-    "Digit1": false,
-    "Digit2": false,
-    "Digit3": false,
-    "KeyQ": false,
-    "KeyW": false,
-    "KeyE": false,
-    "KeyA": false,
-    "KeyS": false,
-    "KeyD": false,
-    "KeyZ": false,
-    "KeyC": false,
-    "Digit4": false,
-    "KeyR": false,
-    "KeyF": false,
-    "KeyV": false
-};
+let keys = [
+    { code: "KeyX", on: false },
+    { code: "Digit1", on: false },
+    { code: "Digit2", on: false },
+    { code: "Digit3", on: false },
+    { code: "KeyQ", on: false },
+    { code: "KeyW", on: false },
+    { code: "KeyE", on: false },
+    { code: "KeyA", on: false },
+    { code: "KeyS", on: false },
+    { code: "KeyD", on: false },
+    { code: "KeyZ", on: false },
+    { code: "KeyC", on: false },
+    { code: "Digit4", on: false },
+    { code: "KeyR", on: false },
+    { code: "KeyF", on: false },
+    { code: "KeyV", on: false },
+];
 document.addEventListener("keydown", (e) => {
-    if (e.code in keys) {
-        keys[e.code] = true;
-        document.getElementById(e.code).style = "background: #aaaaaa;"
+    const key = keys.filter((elem) => elem.code == e.code);
+    if (key.length === 1) {
+        key[0].on = true;
+        document.getElementById(e.code).style = "background: #aaaaaa;";
     }
 });
 document.addEventListener("keyup", (e) => {
-    if (e.code in keys) {
-        keys[e.code] = false;
+    const key = keys.filter((elem) => elem.code == e.code);
+    if (key.length === 1) {
+        key[0].on = false;
         document.getElementById(e.code).style = "";
     }
 });
+function isPressed(key) {
+    return keys[key].on;
+}
 
 const INST_PER_SEC = 700;
 let animationFrame = null;
