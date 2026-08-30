@@ -15,10 +15,9 @@ const { instance } = await WebAssembly.instantiateStreaming(
 
 const buffer = instance.exports.memory.buffer;
 const wasmMemory = new Uint8Array(buffer);
-const wasmMemoryDV = new DataView(buffer);
 const emulatorMemory = new Uint8Array(buffer, instance.exports.mem, 4096);
-const displayW = wasmMemoryDV.getInt32(instance.exports.display_width.value, true);
-const displayH = wasmMemoryDV.getInt32(instance.exports.display_height.value, true);
+const displayW = instance.exports.get_display_width();
+const displayH = instance.exports.get_display_height();
 const display = new BigUint64Array(buffer, instance.exports.display, displayH);
 const stack = new Uint16Array(buffer, instance.exports.stack_base, 16);
 const textDecoder = new TextDecoder("latin1");
