@@ -5,6 +5,18 @@
 #include "printf.h"
 void _putchar(char c) { (void)c; }
 
+#define NIBBLE(inst, n) (((inst) >> (12 - 4 * (n))) & 0x0F)
+#define BYTE(inst, n) (((inst) >> (8 - 8 * (n))) & 0xFF)
+#define ADDR(inst) ((inst) & 0x0FFF)
+
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+#define DISPLAY_WIDTH 64
+#define DISPLAY_HEIGHT 32
+
+#define LOAD_ADDR 0x200
+#define FONT_ADDR 0x50
+
 #define JS_IMPORT(x) __attribute__((import_module("js"), import_name(x)))
 JS_IMPORT("log") void js_log(const char *str);
 JS_IMPORT("error") void js_error(const char *str);
@@ -33,20 +45,6 @@ void print_error(const char *format, ...) {
   js_error(buffer);
 }
 
-#define NIBBLE(inst, n) (((inst) >> (12 - 4 * (n))) & 0x0F)
-#define BYTE(inst, n) (((inst) >> (8 - 8 * (n))) & 0xFF)
-#define ADDR(inst) ((inst) & 0x0FFF)
-
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
-#define WIDTH 64
-#define HEIGHT 32
-// Exported to JS
-const int32_t display_width = WIDTH;   // NOLINT
-const int32_t display_height = HEIGHT; // NOLINT
-
-#define LOAD_ADDR 0x200
-#define FONT_ADDR 0x50
 uint8_t FONT[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -67,7 +65,7 @@ uint8_t FONT[] = {
 };
 
 uint8_t mem[4096];
-uint64_t display[HEIGHT];
+uint64_t display[DISPLAY_HEIGHT];
 uint16_t pc;
 uint16_t idx;
 uint16_t stack_base[16];
@@ -76,6 +74,14 @@ uint8_t delay_timer;
 uint8_t sound_timer;
 uint8_t registers[16];
 uint8_t *flag = &registers[0xF];
+
+int32_t get_display_width() {
+  return DISPLAY_WIDTH;
+}
+
+int32_t get_display_height() {
+  return DISPLAY_HEIGHT;
+}
 
 uint16_t get_pc() {
   return pc;
@@ -99,7 +105,6 @@ uint8_t get_sound_timer() {
 
 // Should be called every time a new ROM is loaded
 void reset() {
-  // Because I'm too lazy to implement memset myself
   __builtin_memset(mem, 0, sizeof(mem));
   for (size_t i = 0; i < sizeof(FONT); i++) {
     mem[FONT_ADDR + i] = FONT[i];
@@ -115,7 +120,7 @@ void reset() {
 }
 
 void clear_display() {
-  for (int i = 0; i < HEIGHT; i++) {
+  for (int i = 0; i < DISPLAY_HEIGHT; i++) {
     display[i] = 0;
   }
 }
@@ -123,15 +128,15 @@ void clear_display() {
 void draw_sprite(int x, int y, int height) {
   *flag = 0;
   for (int i = 0; i < height; i++) {
-    if (y + i >= HEIGHT) {
+    if (y + i >= DISPLAY_HEIGHT) {
       break;
     }
 
     uint64_t mask = (uint64_t)mem[idx + i];
-    if (x <= WIDTH - 8) {
-      mask <<= ((WIDTH - 8) - x);
+    if (x <= DISPLAY_WIDTH - 8) {
+      mask <<= ((DISPLAY_WIDTH - 8) - x);
     } else {
-      mask >>= (x - (WIDTH - 8));
+      mask >>= (x - (DISPLAY_WIDTH - 8));
     }
 
     if (display[y + i] & mask) {
@@ -281,8 +286,8 @@ int step() {
     break;
   // Draw
   case 0xD:
-    uint8_t x = *X % WIDTH;
-    uint8_t y = Y % HEIGHT;
+    uint8_t x = *X % DISPLAY_WIDTH;
+    uint8_t y = Y % DISPLAY_HEIGHT;
     draw_sprite(x, y, N);
     js_refresh_display();
     break;
