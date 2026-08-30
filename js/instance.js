@@ -18,7 +18,7 @@ const buffer = instance.exports.memory.buffer;
 const wasmMemory = new Uint8Array(buffer);
 const emulatorMemory = new Uint8Array(buffer, instance.exports.mem, 4096);
 const display = new BigUint64Array(buffer, instance.exports.display, 32);
-const stack = new Uint16Array(buffer, instance.exports.stack_base, 16);
+const stack = new Uint16Array(buffer, instance.exports.stack, 16);
 
 function refreshDisplay() {
     draw(display);

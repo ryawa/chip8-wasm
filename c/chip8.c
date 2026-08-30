@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -68,8 +69,8 @@ uint8_t mem[4096];
 uint64_t display[DISPLAY_HEIGHT];
 uint16_t pc;
 uint16_t idx;
-uint16_t stack_base[16];
-uint16_t *stack_ptr = stack_base;
+uint16_t stack[16];
+uint8_t stack_count;
 uint8_t delay_timer;
 uint8_t sound_timer;
 uint8_t registers[16];
@@ -83,8 +84,8 @@ uint16_t get_idx() {
   return idx;
 }
 
-uint8_t get_stack_offset() {
-  return stack_ptr - stack_base;
+uint8_t get_stack_count() {
+  return stack_count;
 }
 
 uint8_t get_delay_timer() {
@@ -104,8 +105,8 @@ void reset() {
   __builtin_memset(display, 0, sizeof(display));
   pc = LOAD_ADDR;
   idx = 0;
-  __builtin_memset(stack_base, 0, sizeof(stack_base));
-  stack_ptr = stack_base;
+  __builtin_memset(stack, 0, sizeof(stack));
+  stack_count = 0;
   delay_timer = 0;
   sound_timer = 0;
   __builtin_memset(registers, 0, sizeof(registers));
@@ -178,6 +179,7 @@ void arithmetic(uint8_t N, uint8_t *X, uint8_t Y) {
   }
 }
 
+// TODO: move this into separate file and add decode method that can be used for disassembly
 int step() {
   uint16_t inst = mem[pc] << 8 | mem[pc + 1];
   pc += 2;
@@ -198,11 +200,12 @@ int step() {
         break;
       // Return
       case 0x00EE:
-        pc = *stack_ptr;
-        stack_ptr--;
+        stack_count--;
+        pc = stack[stack_count];
         break;
       default:
         print_error("Expected instruction 0x00E0 or 0x00EE");
+        return 1;
     }
     break;
   // Jump
@@ -211,8 +214,8 @@ int step() {
     break;
   // Call
   case 0x2:
-    stack_ptr++;
-    *stack_ptr = pc;
+    stack[stack_count] = pc;
+    stack_count++;
     pc = NNN;
     break;
   // Jump if equal to value
@@ -270,7 +273,7 @@ int step() {
 #else
     uint8_t offset = registers[0];
 #endif
-    idx = NNN + offset;
+    pc = NNN + offset;
     break;
   // Random
   case 0xC:
