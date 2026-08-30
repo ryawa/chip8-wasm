@@ -75,14 +75,6 @@ uint8_t sound_timer;
 uint8_t registers[16];
 uint8_t *flag = &registers[0xF];
 
-int32_t get_display_width() {
-  return DISPLAY_WIDTH;
-}
-
-int32_t get_display_height() {
-  return DISPLAY_HEIGHT;
-}
-
 uint16_t get_pc() {
   return pc;
 }
