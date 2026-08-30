@@ -1,7 +1,7 @@
 "use strict";
 
 const { instance } = await WebAssembly.instantiateStreaming(
-    fetch("./chip8.wasm"),
+    fetch("./c/chip8.wasm"),
     {
         js: {
             log: log,

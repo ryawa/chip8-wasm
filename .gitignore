@@ -1,2 +1,2 @@
-/.cache/
-*.o
+c/.cache/
+c/*.o

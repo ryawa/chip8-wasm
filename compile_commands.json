@@ -1,3 +1,0 @@
-[
-{ "directory": "/Users/ryan/code/chip8-wasm", "file": "chip8.c", "output": "/var/folders/9d/zkhf1mv122g85lk1ggj5vtn00000gn/T/chip8-4b64f4.o", "arguments": ["/opt/homebrew/Cellar/llvm/22.1.8_2/bin/clang-22", "-xc", "chip8.c", "-o", "/var/folders/9d/zkhf1mv122g85lk1ggj5vtn00000gn/T/chip8-4b64f4.o", "-Wall", "-Wextra", "-O3", "-pedantic", "-std=c23", "--target=wasm32", "-flto=full", "-nostdlib", "-Wl,--no-entry", "-Wl,--export-all", "-Wl,--lto-O3", "-Wl,--export-memory", "-mlinker-version=1267", "-dumpdir", "chip8.wasm-", "--target=wasm32"]}
-]

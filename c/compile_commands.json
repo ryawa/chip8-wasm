@@ -1,0 +1,4 @@
+[
+{ "directory": "/Users/ryan/code/chip8-wasm/c", "file": "chip8.c", "output": "chip8.o", "arguments": ["/opt/homebrew/Cellar/llvm/22.1.8_2/bin/clang-22", "-xc", "chip8.c", "-o", "chip8.o", "-c", "-Wall", "-Wextra", "-O3", "-pedantic", "-std=c23", "--target=wasm32", "-flto=full", "-nostdlib", "-mlinker-version=1267", "--target=wasm32"]},
+{ "directory": "/Users/ryan/code/chip8-wasm/c", "file": "printf.c", "output": "printf.o", "arguments": ["/opt/homebrew/Cellar/llvm/22.1.8_2/bin/clang-22", "-xc", "printf.c", "-o", "printf.o", "-c", "-Wall", "-Wextra", "-O3", "-pedantic", "-std=c23", "--target=wasm32", "-flto=full", "-nostdlib", "-mlinker-version=1267", "--target=wasm32"]}
+]
