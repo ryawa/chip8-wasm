@@ -106,40 +106,39 @@ function refreshDisplay() {
     }
 }
 
-let keys = [
-    { code: "KeyX", on: false },
-    { code: "Digit1", on: false },
-    { code: "Digit2", on: false },
-    { code: "Digit3", on: false },
-    { code: "KeyQ", on: false },
-    { code: "KeyW", on: false },
-    { code: "KeyE", on: false },
-    { code: "KeyA", on: false },
-    { code: "KeyS", on: false },
-    { code: "KeyD", on: false },
-    { code: "KeyZ", on: false },
-    { code: "KeyC", on: false },
-    { code: "Digit4", on: false },
-    { code: "KeyR", on: false },
-    { code: "KeyF", on: false },
-    { code: "KeyV", on: false },
-];
+let keyMap = {
+    "KeyX": 0x0,
+    "Digit1": 0x1,
+    "Digit2": 0x2,
+    "Digit3": 0x3,
+    "KeyQ": 0x4,
+    "KeyW": 0x5,
+    "KeyE": 0x6,
+    "KeyA": 0x7,
+    "KeyS": 0x8,
+    "KeyD": 0x9,
+    "KeyZ": 0xa,
+    "KeyC": 0xb,
+    "Digit4": 0xc,
+    "KeyR": 0xd,
+    "KeyF": 0xe,
+    "KeyV": 0xf,
+};
+let keys = new Array(16).fill(false);
 document.addEventListener("keydown", (e) => {
-    const key = keys.filter((elem) => elem.code == e.code);
-    if (key.length === 1) {
-        key[0].on = true;
+    if (e.code in keyMap) {
+        keys[keyMap[e.code]] = true;
         document.getElementById(e.code).style = "background: #aaaaaa;";
     }
 });
 document.addEventListener("keyup", (e) => {
-    const key = keys.filter((elem) => elem.code == e.code);
-    if (key.length === 1) {
-        key[0].on = false;
+    if (e.code in keyMap) {
+        keys[keyMap[e.code]] = false;
         document.getElementById(e.code).style = "";
     }
 });
 function isPressed(key) {
-    return keys[key].on;
+    return keys[key];
 }
 
 const INST_PER_SEC = 700;
