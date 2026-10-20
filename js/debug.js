@@ -1,4 +1,4 @@
-import { instance, emulatorMemory } from "./instance.js";
+import { instance, emulatorMemory, ptrToStr } from "./instance.js";
 
 function uint16Str(x) {
     return x.toString(16).padStart(4, "0");
@@ -14,11 +14,14 @@ function updateMemoryDisplays() {
     for (let i = 0; i < 4096; i += 16) {
         let line = `<p style="margin: 0;">${uint16Str(i)}: `;
         for (let j = 0; j < 16; j += 2) {
-            const word = uint16Str((emulatorMemory[i + j] << 8) | emulatorMemory[i + j + 1]);
-            line += `<span id="mem-${i + j}">${word}</span>`;
+            const word = (emulatorMemory[i + j] << 8) | emulatorMemory[i + j + 1];
+            const wordStr = uint16Str(word);
+
+            line += `<span id="mem-${i + j}">${wordStr}</span>`;
             line += " ";
 
-            instructionsHTML += `<p id="inst-${i + j}" style="margin: 0;">${uint16Str(i + j)}: ${word}</p>`;
+            const disas = ptrToStr(instance.exports.get_disas(word));
+            instructionsHTML += `<p id="inst-${i + j}" style="margin: 0;">${uint16Str(i + j)}: ${disas}</p>`;
         }
         for (let j = 0; j < 16; j++) {
             if (isPrintable(emulatorMemory[i + j])) {

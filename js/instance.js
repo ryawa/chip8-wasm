@@ -41,4 +41,4 @@ function error(ptr) {
     console.error(ptrToStr(ptr));
 }
 
-export { instance, emulatorMemory, refreshDisplay, stack };
+export { instance, emulatorMemory, refreshDisplay, stack, ptrToStr };
