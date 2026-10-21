@@ -51,9 +51,9 @@ function step(now) {
     while (timerAccumulator >= 1 / TIMER_HZ) {
         instance.exports.update_timers();
         const soundTimer = instance.exports.get_sound_timer();
-        if (soundTimer > 0 && prevSoundTimer == 0) {
+        if (soundTimer > 0 && prevSoundTimer === 0) {
             playSound();
-        } else if (soundTimer == 0 && prevSoundTimer > 0) {
+        } else if (soundTimer === 0 && prevSoundTimer > 0) {
             stopSound();
         }
         prevSoundTimer = soundTimer;

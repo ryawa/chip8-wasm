@@ -10,6 +10,7 @@ const { instance } = await WebAssembly.instantiateStreaming(
             refreshDisplay: refreshDisplay,
             rand: () => Math.floor(Math.random() * Math.pow(2, 31) - 1),
             isPressed: (key) => keys[key],
+            getPressed: () => keys.findIndex((el) => el === true)
         }
     }
 );

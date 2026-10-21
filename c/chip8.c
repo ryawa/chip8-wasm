@@ -21,6 +21,7 @@ JS_IMPORT("refreshDisplay") void js_refresh_display();
 JS_IMPORT("updateMemoryDisplays") void js_update_memory_displays();
 JS_IMPORT("rand") int js_rand();
 JS_IMPORT("isPressed") bool js_is_pressed(uint8_t key);
+JS_IMPORT("getPressed") int js_get_pressed();
 
 /* Utility functions */
 void print(const char *format, ...) {
@@ -579,10 +580,12 @@ int step() {
     }
     break;
   case WAIT_KEY:
-    if (!js_is_pressed(registers[i.a])) {
+    int r = js_get_pressed();
+    if (r == -1) {
       pc -= 2;
+    } else {
+      registers[i.a] = r;
     }
-    // TODO: put pressed keys into VX while blocking
     break;
   case FONT_INDEX:
     idx = FONT_ADDR + 5 * (registers[i.a] & 0xF);
