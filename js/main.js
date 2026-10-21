@@ -1,28 +1,62 @@
 import { instance, emulatorMemory, refreshDisplay } from "./instance.js";
 import { updateMemoryDisplays, refreshDebug } from "./debug.js";
 
-const INST_PER_SEC = 700;
+const INSN_HZ = 700;
+const TIMER_HZ = 60;
 let animationFrame = null;
 let last;
-let accumulator = 0;
+let insnAccumulator = 0;
+let timerAccumulator = 0;
+let running = false;
+
+const audioCtx = new AudioContext();
+let oscillator = null;
+let prevSoundTimer = 0;
 
 function start() {
+    if (running) return;
+    running = true;
     last = document.timeline.currentTime;
     animationFrame = requestAnimationFrame(step);
 }
 
 function stop() {
+    running = false;
     cancelAnimationFrame(animationFrame);
 }
 
+function playSound() {
+    oscillator = audioCtx.createOscillator();
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+    oscillator.connect(audioCtx.destination);
+    oscillator.start();
+}
+
+function stopSound() {
+    oscillator.stop();
+}
+
 function step(now) {
-    accumulator += (now - last) / 1000;
-    while (accumulator >= 1 / INST_PER_SEC) {
+    insnAccumulator += (now - last) / 1000;
+    while (insnAccumulator >= 1 / INSN_HZ) {
         if (instance.exports.step() !== 0) {
             return;
         }
         refreshDebug();
-        accumulator -= 1 / INST_PER_SEC;
+        insnAccumulator -= 1 / INSN_HZ;
+    }
+    timerAccumulator += (now - last) / 1000;
+    while (timerAccumulator >= 1 / TIMER_HZ) {
+        instance.exports.update_timers();
+        const soundTimer = instance.exports.get_sound_timer();
+        if (soundTimer > 0 && prevSoundTimer == 0) {
+            playSound();
+        } else if (soundTimer == 0 && prevSoundTimer > 0) {
+            stopSound();
+        }
+        prevSoundTimer = soundTimer;
+        timerAccumulator -= 1 / TIMER_HZ;
     }
 
     last = now;
@@ -34,7 +68,7 @@ async function reset() {
     instance.exports.reset();
     refreshDisplay();
     last = undefined;
-    accumulator = 0;
+    insnAccumulator = 0;
     const bytes = await fileInput.files[0].bytes();
     emulatorMemory.set(bytes, 0x200);
     updateMemoryDisplays();

@@ -96,6 +96,15 @@ void reset() {
   __builtin_memset(registers, 0, sizeof(registers));
 }
 
+void update_timers() {
+  if (delay_timer > 0) {
+    delay_timer--;
+  }
+  if (sound_timer > 0) {
+    sound_timer--;
+  }
+}
+
 void clear_display() {
   for (int i = 0; i < DISPLAY_HEIGHT; i++) {
     display[i] = 0;
@@ -343,15 +352,14 @@ int decode(struct insn *i, uint16_t raw) {
     sprintf(i->disas, "sprite v%x, v%x, %x", i->a, i->b, i->c);
     break;
   case 0xE:
+    i->a = enc.xnn.x;
     switch (enc.xnn.nn) {
     case 0x9E:
       i->op = SKIP_KEY_DOWN;
-      i->a = enc.xnn.x;
       sprintf(i->disas, "skpr %x", i->a);
       break;
     case 0xA1:
       i->op = SKIP_KEY_UP;
-      i->a = enc.xnn.x;
       sprintf(i->disas, "skup %x", i->a);
       break;
     default:
@@ -361,8 +369,8 @@ int decode(struct insn *i, uint16_t raw) {
     break;
   case 0xF: {
     char *op_str;
+    i->a = enc.xnn.x;
     switch (enc.xnn.nn) {
-      i->a = enc.xnn.x;
     case 0x07:
       i->op = GET_DELAY;
       op_str = "gdelay";
@@ -403,7 +411,7 @@ int decode(struct insn *i, uint16_t raw) {
       print_error("Unknown opcode 0xF instruction");
       return 1;
     }
-    sprintf(i->disas, "%s %sv%x", op_str, enc.xnn.nn <= 0x33 ? " " : "", i->a);
+    sprintf(i->disas, "%s%sv%x", op_str, enc.xnn.nn <= 0x33 ? " " : "", i->a);
     break;
   }
   }
@@ -533,22 +541,44 @@ int step() {
       pc += 2;
     break;
   case GET_DELAY:
+    registers[i.a] = delay_timer;
     break;
   case SET_DELAY:
+    delay_timer = registers[i.a];
     break;
   case SET_SOUND:
+    sound_timer = registers[i.a];
     break;
   case ADD_INDEX:
+    idx += registers[i.a];
+    if (idx > 0xFFF) {
+      *flag = 1;
+    }
     break;
   case WAIT_KEY:
+    if (!js_is_pressed(registers[i.a])) {
+      pc -= 2;
+    }
+    // TODO: put pressed keys into VX while blocking
     break;
   case FONT_INDEX:
+    idx = FONT_ADDR + 5 * (registers[i.a] & 0xF);
     break;
   case BCD:
+    uint8_t v = registers[i.a];
+    mem[idx] = v / 100;
+    mem[idx + 1] = (v / 10) % 10;
+    mem[idx + 2] = v % 10;
     break;
   case STORE:
+    for (int x = 0; x <= i.a; x++) {
+      mem[idx + x] = registers[x];
+    }
     break;
   case LOAD:
+    for (int x = 0; x <= i.a; x++) {
+      registers[x] = mem[idx + x];
+    }
     break;
   }
 
