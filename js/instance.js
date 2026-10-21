@@ -39,7 +39,7 @@ function log(ptr) {
 }
 
 function error(ptr) {
-    console.error(ptrToStr(ptr));
+    // console.error(ptrToStr(ptr));
 }
 
 export { instance, emulatorMemory, refreshDisplay, stack, ptrToStr };

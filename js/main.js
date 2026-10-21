@@ -1,5 +1,5 @@
 import { instance, emulatorMemory, refreshDisplay } from "./instance.js";
-import { updateMemoryDisplays, refreshDebug } from "./debug.js";
+import { refreshDebug } from "./debug.js";
 
 const INSN_HZ = 700;
 const TIMER_HZ = 60;
@@ -39,12 +39,13 @@ function stop() {
 }
 
 function step(now) {
+    refreshDebug();
+
     insnAccumulator += (now - last) / 1000;
     while (insnAccumulator >= 1 / INSN_HZ) {
         if (instance.exports.step() !== 0) {
             return;
         }
-        refreshDebug();
         insnAccumulator -= 1 / INSN_HZ;
     }
     timerAccumulator += (now - last) / 1000;
@@ -72,7 +73,6 @@ async function reset() {
     insnAccumulator = 0;
     const bytes = await fileInput.files[0].bytes();
     emulatorMemory.set(bytes, 0x200);
-    updateMemoryDisplays();
     refreshDebug();
 }
 
@@ -97,4 +97,4 @@ document.getElementById("reset").addEventListener("click", () => {
 });
 
 refreshDisplay();
-updateMemoryDisplays();
+refreshDebug();

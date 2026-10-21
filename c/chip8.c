@@ -80,6 +80,8 @@ uint16_t get_idx() { return idx; }
 uint8_t get_stack_count() { return stack_count; }
 uint8_t get_delay_timer() { return delay_timer; }
 uint8_t get_sound_timer() { return sound_timer; }
+uint8_t get_register(uint8_t which) { return registers[which]; }
+uint16_t get_stack(uint8_t i) { return stack[i]; }
 
 // Should be called every time a new ROM is loaded
 void reset() {
