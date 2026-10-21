@@ -490,26 +490,49 @@ int step() {
     registers[i.a] ^= registers[i.b];
     break;
   case ADD:
+    if (registers[i.b] > 0xFF - registers[i.a]) {
+      *flag = 1;
+    } else {
+      *flag = 0;
+    }
     registers[i.a] += registers[i.b];
     break;
   case SUBTRACT:
+    if (registers[i.a] >= registers[i.b]) {
+      *flag = 1;
+    } else {
+      *flag = 0;
+    }
     registers[i.a] -= registers[i.b];
     break;
   case SUBTRACT_REVERSE:
+    if (registers[i.b] >= registers[i.a]) {
+      *flag = 1;
+    } else {
+      *flag = 0;
+    }
     registers[i.a] = registers[i.b] - registers[i.a];
     break;
   case SHIFT_RIGHT:
 #ifdef SHIFT_SET
     registers[i.a] = registers[i.b];
 #endif
-    *flag = registers[i.a] & 1;
+    if (registers[i.a] & 1) {
+      *flag = 1;
+    } else {
+      *flag = 0;
+    }
     registers[i.a] >>= 1;
     break;
   case SHIFT_LEFT:
 #ifdef SHIFT_SET
     registers[i.a] = registers[i.b];
 #endif
-    *flag = registers[i.a] & (1 << 7);
+    if (registers[i.a] & (1 << 7)) {
+      *flag = 1;
+    } else {
+      *flag = 0;
+    }
     registers[i.a] <<= 1;
     break;
   case MOVE_INDEX:

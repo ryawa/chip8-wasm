@@ -13,18 +13,6 @@ const audioCtx = new AudioContext();
 let oscillator = null;
 let prevSoundTimer = 0;
 
-function start() {
-    if (running) return;
-    running = true;
-    last = document.timeline.currentTime;
-    animationFrame = requestAnimationFrame(step);
-}
-
-function stop() {
-    running = false;
-    cancelAnimationFrame(animationFrame);
-}
-
 function playSound() {
     oscillator = audioCtx.createOscillator();
     oscillator.type = "square";
@@ -34,7 +22,20 @@ function playSound() {
 }
 
 function stopSound() {
-    oscillator.stop();
+    if (oscillator) oscillator.stop();
+}
+
+function start() {
+    if (running) return;
+    running = true;
+    last = document.timeline.currentTime;
+    animationFrame = requestAnimationFrame(step);
+}
+
+function stop() {
+    running = false;
+    stopSound();
+    cancelAnimationFrame(animationFrame);
 }
 
 function step(now) {
