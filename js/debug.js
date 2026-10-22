@@ -61,7 +61,6 @@ function updateRegisters() {
 function updateStack() {
     let stackHTML = "";
     const stackCount = instance.exports.get_stack_count();
-    console.log(stackCount);
     for (let i = 0; i < 16; i++) {
         stackHTML += `${uint16Str(instance.exports.get_stack(i))}</br>`;
         if (i + 1 == stackCount) {
